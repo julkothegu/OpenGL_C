@@ -8,6 +8,6 @@ uniform sampler2D texto;
 
 void main()
 {   
-	FragColor = vec4(Color, 1.0);
+    FragColor = vec4(Color, 1.0);
 }
 

@@ -68,6 +68,9 @@ int main(void)
 
     glEnable(GL_DEPTH_TEST);
 
+    Textures tex1;
+    tex1.texSetUp("C:/Users/Julko/Documents/Cpp projects/Open_GL_1/Project_1 c/Project1/Resources/Images/box1.png", "png", false);
+
     Shader normal;
     normal.setUpShader("Resources/Shaders/lightObject.vs", "Resources/Shaders/lightObject.fs");
     Shader depthS;
@@ -96,9 +99,6 @@ int main(void)
     unsigned int t2 = texo.addTex("Resources/Images/specmap.png", "png", true);
     */
 
-    depthR.use();
-    depthR.setInt("depthMap", 15);
-
     const unsigned int d_width = 1024, d_height = 1024;
 
     unsigned int depthFBO;
@@ -107,7 +107,7 @@ int main(void)
 
     unsigned int depthMap;
     glGenTextures(1, &depthMap);
-    glActiveTexture(GL_TEXTURE15);
+    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, depthMap);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, d_width, d_height, 0, GL_DEPTH_ATTACHMENT, GL_FLOAT, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -124,26 +124,10 @@ int main(void)
 
     glBindBuffer(GL_FRAMEBUFFER, 0);
 
-    glm::vec3 lightPos(2.0f, 4.0f, 1.0f);
+    depthR.use();
+    depthR.setInt("depthMap", 0);
 
-    //imgui
-    const char* glsl_version = "#version 130";
-
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
-
-    // Setup Dear ImGui style
-    ImGui::StyleColorsDark();
-    //ImGui::StyleColorsClassic();
-
-    // Setup Platform/Renderer bindings
-    ImGui_ImplGlfw_InitForOpenGL(window, true);
-    ImGui_ImplOpenGL3_Init(glsl_version);
-
-    bool show_demo_window = true;
-    bool show_another_window = false;
-    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+    glm::vec3 lightPos(-2.0f, 4.0f, 1.0f);
 
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
@@ -165,14 +149,14 @@ int main(void)
         glm::mat4 lightView = glm::lookAt(lightPos, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         glm::mat4 lightSpaceMat = lightProj * lightView;
 
-        depthS.use();
-        depthS.setUniformMat4("lightSpaceMat", lightSpaceMat);
-        glm::mat4 model = glm::mat4(1.0f);
-        depthS.setUniformMat4("model", model);
-      
         glViewport(0, 0, d_width, d_height);
         glBindFramebuffer(GL_FRAMEBUFFER, depthFBO);
         glClear(GL_DEPTH_BUFFER_BIT);
+
+        depthS.use();
+        depthS.setUniformMat4("lightSpaceMat", lightSpaceMat);
+        glm::mat4 model = glm::mat4(1.0f);
+        depthS.setUniformMat4("model", model);        
 
         depthS.use();
 
@@ -198,22 +182,11 @@ int main(void)
         
         va2.bind();
         depthR.use();
-        glActiveTexture(GL_TEXTURE15);
+        depthR.setFloat("near_plane", near_plane);
+        depthR.setFloat("far_plane", far_plane);
+        glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, depthMap);
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
-
-        if (!show_demo_window)
-            ImGui::ShowDemoWindow(&show_demo_window);
-
-        ImGui::Begin("Hello, world!");
-        ImGui::End();
-
-        ImGui::Render();
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
